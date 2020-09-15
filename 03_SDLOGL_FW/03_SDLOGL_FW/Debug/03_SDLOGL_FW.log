@@ -1,0 +1,5 @@
+﻿  MyApp.cpp
+C:\Coding\2020OszGrafikaGyak\03_SDLOGL_FW\03_SDLOGL_FW\MyApp.cpp(39,87): warning C4244: 'argument': conversion from 'double' to 'GLclampf', possible loss of data
+C:\Coding\2020OszGrafikaGyak\03_SDLOGL_FW\03_SDLOGL_FW\MyApp.cpp(39,60): warning C4244: 'argument': conversion from 'double' to 'GLclampf', possible loss of data
+C:\Coding\2020OszGrafikaGyak\03_SDLOGL_FW\03_SDLOGL_FW\MyApp.cpp(39,33): warning C4244: 'argument': conversion from 'double' to 'GLclampf', possible loss of data
+  03_SDLOGL_FW.vcxproj -> C:\Coding\2020OszGrafikaGyak\03_SDLOGL_FW\Debug\03_SDLOGL_FW.exe
