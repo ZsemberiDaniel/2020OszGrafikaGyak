@@ -75,5 +75,5 @@ void CMyApp::MouseWheel(SDL_MouseWheelEvent& wheel)
 // a két paraméterbe az új ablakméret szélessége (_w) és magassága (_h) található
 void CMyApp::Resize(int _w, int _h)
 {
-	glViewport(0, 0, _w, _h );
+	glViewport(0, 0, _w * 0.5f, _h * 0.5 );
 }
