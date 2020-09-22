@@ -1,6 +1,0 @@
-﻿  MyApp.cpp
-C:\Coding\2020OszGrafikaGyak\01_Shaders\01_Shaders\MyApp.cpp(87,28): warning C4244: 'argument': conversion from 'int' to 'GLfloat', possible loss of data
-C:\Coding\2020OszGrafikaGyak\01_Shaders\01_Shaders\MyApp.cpp(88,29): warning C4244: 'argument': conversion from 'int' to 'GLfloat', possible loss of data
-  main.cpp
-  Generating Code...
-  01_Shaders.vcxproj -> C:\Coding\2020OszGrafikaGyak\01_Shaders\x64\Debug\01_Shaders.exe
