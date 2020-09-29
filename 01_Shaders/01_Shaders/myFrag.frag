@@ -30,6 +30,7 @@ void main()
     vec2 c = p;
 	int n = 30;
     for (int i = 0; i < n; i++) {
+		// c ^ 2 + x_0
         c = square(c) + p;
 
 		if (length(c) > 1000000) {
