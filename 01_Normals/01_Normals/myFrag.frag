@@ -27,38 +27,19 @@ uniform vec3 Ks = vec3(0.2, 0.4, 0.6);
 
 uniform sampler2D texImage;
 
-void main()
-{	
-	//
-	// ambiens szín számítása
-	//
+vec3 directionalLight(vec3 La, vec3 Ld, vec3 Ls, vec3 lightDir) 
+{
+	// ambient
 	vec3 ambient = La * Ka;
 
-	// directional light
-	vec3 toLight = normalize(-light_dir);
-	// spotlight, point light
-	toLight = normalize(light_pos - vs_out_pos);
-
-	//
-	// diffúz szín számítása
-	//	
-	/* segítség:
-	    - normalizálás: http://www.opengl.org/sdk/docs/manglsl/xhtml/normalize.xml
-	    - skaláris szorzat: http://www.opengl.org/sdk/docs/manglsl/xhtml/dot.xml
-	    - clamp: http://www.opengl.org/sdk/docs/manglsl/xhtml/clamp.xml
-	*/
-
+	// diffuse
+	vec3 toLight = normalize(-lightDir);
+	
 	vec3 normal = normalize(vs_out_norm);
 	float di = clamp(dot(toLight, normal), 0.0f, 1.0f);
 	vec3 diffuse = Ld * Kd * di;
 
-	//
-	// fényfoltképzõ szín
-	//
-	/* segítség:
-		- reflect: http://www.opengl.org/sdk/docs/manglsl/xhtml/reflect.xml
-		- power: http://www.opengl.org/sdk/docs/manglsl/xhtml/pow.xml
-	*/
+	// specular
 	vec3 specular = vec3(0);
 
 	if (di > 0)
@@ -68,36 +49,82 @@ void main()
 		float si = pow(clamp(dot(e, r), 0.0f, 1.0f), 25);
 		specular = Ls * Ks * si;
 	}
+
+	return ambient + diffuse + specular;
+}
+
+vec3 pointLight(vec3 La, vec3 Ld, vec3 Ls, vec3 lightPos, float brightness) 
+{
+	// ambient
+	vec3 ambient = La * Ka;
+
+	// diffuse
+	vec3 toLight = normalize(lightPos - vs_out_pos);
 	
-	//
-	// a fragment végsõ színének meghatározása
-	//
+	vec3 normal = normalize(vs_out_norm);
+	float di = clamp(dot(toLight, normal), 0.0f, 1.0f);
+	vec3 diffuse = Ld * Kd * di;
 
-	//fs_out_col = vec4(ambient + diffuse + specular, 1);
+	// specular
+	vec3 specular = vec3(0);
 
-	// fs_out_col = vec4(ambient + falloff * (diffuse + specular), 1);
-	// felületi normális
-	//fs_out_col = vec4(vs_out_norm, 1);
+	if (di > 0)
+	{
+		vec3 e = normalize(eye_pos - vs_out_pos);
+		vec3 r = reflect(-toLight, normal);
+		float si = pow(clamp(dot(e, r), 0.0f, 1.0f), 25);
+		specular = Ls * Ks * si;
+	}
 
 	// falloff for point light
 	float dist = distance(light_pos, vs_out_pos);
-	float falloff = 30.0 / dist / dist;
+	float falloff = brightness / dist / dist;
+
+	return ambient + falloff * (diffuse + specular);
+}
+
+vec3 spotLight(vec3 La, vec3 Ld, vec3 Ls, vec3 lightPos, vec3 lightDir, float spotAngle)
+{
+	// ambient
+	vec3 ambient = La * Ka;
+
+	// diffuse
+	vec3 toLight = normalize(lightPos - vs_out_pos);
+	
+	vec3 normal = normalize(vs_out_norm);
+	float di = clamp(dot(toLight, normal), 0.0f, 1.0f);
+	vec3 diffuse = Ld * Kd * di;
+
+	// specular
+	vec3 specular = vec3(0);
+
+	if (di > 0)
+	{
+		vec3 e = normalize(eye_pos - vs_out_pos);
+		vec3 r = reflect(-toLight, normal);
+		float si = pow(clamp(dot(e, r), 0.0f, 1.0f), 25);
+		specular = Ls * Ks * si;
+	}
 
 	// falloff for spotlight
-	float angle = acos(dot(-toLight, normalize(light_dir)));
+	float angle = acos(dot(-toLight, normalize(lightDir)));
 	float ex = exp(64 * (angle - spotAngle));
 	float spoti = 1 / (ex + 1);
 
-	// textúrával
-	vec4 textureColor = texture(texImage, vs_out_tex);
-	fs_out_col = vec4(ambient + /*falloff*/ spoti * (diffuse + specular), 1) * textureColor;
+	return ambient + spoti * (diffuse + specular);
 }
 
-// Feladatok
 
-// 1) Fényszámítás
-// - ambiens
-// - diffúz
-// - spekuláris
+void main()
+{	
+	/*fs_out_col = vec4(vs_out_norm, 1);
+	return;*/
 
-// 2) Textúra
+	vec3 color = vec3(0);
+	color += spotLight(La, Ld, Ls, light_pos, light_dir, spotAngle);
+	color += directionalLight(1.0f - La, 1.0f - Ld, 1.0f - Ls, vec3(-1, -2, 0));
+
+	color = clamp(color, vec3(0), vec3(1));
+
+	fs_out_col = vec4(color, 1);
+}

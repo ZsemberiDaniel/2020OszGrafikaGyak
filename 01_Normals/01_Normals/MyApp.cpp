@@ -5,7 +5,7 @@
 
 CMyApp::CMyApp(void)
 {
-	m_camera.SetView(glm::vec3(5, 5, 5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	// m_camera.SetView(glm::vec3(5, 5, 5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 
 	m_vaoID = 0;
 	m_vboID = 0;
@@ -19,6 +19,48 @@ CMyApp::CMyApp(void)
 
 CMyApp::~CMyApp(void)
 {
+}
+
+//
+// egy parametrikus felület (u,v) paraméterértékekhez tartozó pontjának
+// kiszámítását végzõ függvény
+//
+glm::vec3 CMyApp::GetPos2(float u, float v)
+{
+	// origó középpontú, r sugarú gömb parametrikus alakja: http://hu.wikipedia.org/wiki/G%C3%B6mb#Egyenletek 
+	// figyeljünk:	matematikában sokszor a Z tengely mutat felfelé, de nálunk az Y, tehát a legtöbb képlethez képest nálunk
+	//				az Y és Z koordináták felcserélve szerepelnek
+	u *= float(2 * M_PI);
+	v *= float(2 * M_PI);
+	float cu = cosf(u), su = sinf(u), cv = cosf(v), sv = sinf(v);
+	float c = 2.0f;
+	float a = 1.0f;
+
+	return glm::vec3((c + a * cv) * cu, (c + a * cv) * su, a * sv);
+}
+
+//
+// egy parametrikus felület (u,v) paraméterértékekhez tartozó normálvektorának
+// kiszámítását végzõ függvény
+//
+glm::vec3 CMyApp::GetNorm2(float u, float v)
+{
+	// Képlettel
+	u *= float(2 * M_PI);
+	v *= float(2 * M_PI);
+	float cu = cosf(u), su = sinf(u), cv = cosf(v), sv = sinf(v);
+	float c = 2.0f;
+	float a = 1.0f;
+
+	glm::vec3 du = glm::vec3((c + a * cv) * -su, (c + a * cv) * cu, 0);
+	glm::vec3 dv = glm::vec3(a * cu * -sv, a * su * -sv, a * cv);
+
+	// Numerikusan (nem kell ismerni a képletet, elég a pozícióét)
+
+	// glm::vec3 du = GetPos2(u + 0.01, v) - GetPos2(u - 0.01, v);
+	// glm::vec3 dv = GetPos2(u, v + 0.01) - GetPos2(u, v - 0.01);
+
+	return glm::normalize(glm::cross(du, dv));
 }
 
 //
@@ -50,9 +92,9 @@ glm::vec3 CMyApp::GetNorm(float u, float v)
 	return glm::vec3(cu*sv, cv, su*sv);
 
 	// Numerikusan (nem kell ismerni a képletet, elég a pozícióét)
-	/*
-	glm::vec3 du = GetPos(u+0.01, v)-GetPos(u-0.01, v);
-	glm::vec3 dv = GetPos(u, v+0.01)-GetPos(u, v-0.01);
+	
+	/*glm::vec3 du = GetPos(u+0.001, v)-GetPos(u-0.001, v);
+	glm::vec3 dv = GetPos(u, v+0.001)-GetPos(u, v-0.001);
 
 	return glm::normalize(glm::cross(du, dv));*/
 }
@@ -60,6 +102,83 @@ glm::vec3 CMyApp::GetNorm(float u, float v)
 glm::vec2 CMyApp::GetTex(float u, float v)
 {
 	return glm::vec2(1 - u, 1 - v);
+}
+
+
+void CMyApp::InitCube()
+{
+	//struct Vertex{ glm::vec3 position; glm::vec3 normals; glm::vec2 texture; };
+	std::vector<Vertex>vertices;
+
+	//front									 
+	vertices.push_back({ glm::vec3(-0.5, -0.5, +0.5), glm::vec3(0, 0,  1), glm::vec2(0, 0) });
+	vertices.push_back({ glm::vec3(+0.5, -0.5, +0.5), glm::vec3(0, 0,  1), glm::vec2(1, 0) });
+	vertices.push_back({ glm::vec3(-0.5, +0.5, +0.5), glm::vec3(0, 0,  1), glm::vec2(0, 1) });
+	vertices.push_back({ glm::vec3(+0.5, +0.5, +0.5), glm::vec3(0, 0,  1), glm::vec2(1, 1) });
+	//back
+	vertices.push_back({ glm::vec3(+0.5, -0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(0, 0) });
+	vertices.push_back({ glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(1, 0) });
+	vertices.push_back({ glm::vec3(+0.5, +0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(0, 1) });
+	vertices.push_back({ glm::vec3(-0.5, +0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(1, 1) });
+	//right									 
+	vertices.push_back({ glm::vec3(+0.5, -0.5, +0.5), glm::vec3(1, 0, 0), glm::vec2(0, 0) });
+	vertices.push_back({ glm::vec3(+0.5, -0.5, -0.5), glm::vec3(1, 0, 0), glm::vec2(1, 0) });
+	vertices.push_back({ glm::vec3(+0.5, +0.5, +0.5), glm::vec3(1, 0, 0), glm::vec2(0, 1) });
+	vertices.push_back({ glm::vec3(+0.5, +0.5, -0.5), glm::vec3(1, 0, 0), glm::vec2(1, 1) });
+	//left									 
+	vertices.push_back({ glm::vec3(-0.5, -0.5, -0.5), glm::vec3(-1, 0, 0), glm::vec2(0, 0) });
+	vertices.push_back({ glm::vec3(-0.5, -0.5, +0.5), glm::vec3(-1, 0, 0), glm::vec2(1, 0) });
+	vertices.push_back({ glm::vec3(-0.5, +0.5, -0.5), glm::vec3(-1, 0, 0), glm::vec2(0, 1) });
+	vertices.push_back({ glm::vec3(-0.5, +0.5, +0.5), glm::vec3(-1, 0, 0), glm::vec2(1, 1) });
+	//top
+	vertices.push_back({ glm::vec3(-0.5, +0.5, +0.5), glm::vec3(0,  1, 0), glm::vec2(0, 0) });
+	vertices.push_back({ glm::vec3(+0.5, +0.5, +0.5), glm::vec3(0,  1, 0), glm::vec2(1, 0) });
+	vertices.push_back({ glm::vec3(-0.5, +0.5, -0.5), glm::vec3(0,  1, 0), glm::vec2(0, 1) });
+	vertices.push_back({ glm::vec3(+0.5, +0.5, -0.5), glm::vec3(0,  1, 0), glm::vec2(1, 1) });
+	//bottom								 
+	vertices.push_back({ glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0, -1, 0), glm::vec2(0, 0) });
+	vertices.push_back({ glm::vec3(+0.5, -0.5, -0.5), glm::vec3(0, -1, 0), glm::vec2(1, 0) });
+	vertices.push_back({ glm::vec3(-0.5, -0.5, +0.5), glm::vec3(0, -1, 0), glm::vec2(0, 1) });
+	vertices.push_back({ glm::vec3(+0.5, -0.5, +0.5), glm::vec3(0, -1, 0), glm::vec2(1, 1) });
+
+	GLushort indices[36];
+	int index = 0;
+	//4 csúcspontonként 6 index eltárolása
+	for (int i = 0; i < 6 * 4; i += 4)
+	{
+		indices[index + 0] = i + 0;
+		indices[index + 1] = i + 1;
+		indices[index + 2] = i + 2;
+		indices[index + 3] = i + 1;
+		indices[index + 4] = i + 3;
+		indices[index + 5] = i + 2;
+		index += 6;
+	}
+
+	glGenVertexArrays(1, &m_cube_vaoID);
+	glBindVertexArray(m_cube_vaoID);
+
+	glGenBuffers(1, &m_cube_vboID);
+	glBindBuffer(GL_ARRAY_BUFFER, m_cube_vboID);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(glm::vec3)));
+
+	// textúrakoordináták bekapcsolása a 2-es azonosítójú attribútom csatornán
+	glEnableVertexAttribArray(2); // ez lesz majd a textúra
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2 * sizeof(glm::vec3)));
+
+	glGenBuffers(1, &m_cube_ibID);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_cube_ibID);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void CMyApp::InitSphere()
@@ -145,6 +264,97 @@ void CMyApp::InitSphere()
 	// index puffer létrehozása
 	glGenBuffers(1, &m_ibID);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibID);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glBindVertexArray(0); // feltöltüttük a VAO-t, kapcsoljuk le
+	glBindBuffer(GL_ARRAY_BUFFER, 0); // feltöltöttük a VBO-t is, ezt is vegyük le
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // feltöltöttük a VBO-t is, ezt is vegyük le
+
+}
+
+void CMyApp::InitTorus()
+{
+	// NxM darab négyszöggel közelítjük a parametrikus felületünket => (N+1)x(M+1) pontban kell kiértékelni
+	Vertex vert[(N + 1) * (M + 1)];
+	for (int i = 0; i <= N; ++i)
+		for (int j = 0; j <= M; ++j)
+		{
+			float u = i / (float)N;
+			float v = j / (float)M;
+
+			vert[i + j * (N + 1)].p = GetPos2(u, v);
+			vert[i + j * (N + 1)].n = GetNorm2(u, v);
+			vert[i + j * (N + 1)].t = GetTex(u, v);
+		}
+
+	// indexpuffer adatai: NxM négyszög = 2xNxM háromszög = háromszöglista esetén 3x2xNxM index
+	GLushort indices[3 * 2 * (N) * (M)];
+	for (int i = 0; i < N; ++i)
+		for (int j = 0; j < M; ++j)
+		{
+			// minden négyszögre csináljunk kettõ háromszöget, amelyek a következõ 
+			// (i,j) indexeknél született (u_i, v_i) paraméterértékekhez tartozó
+			// pontokat kötik össze:
+			//
+			//		(i,j+1)
+			//		  o-----o(i+1,j+1)
+			//		  |\    |			a = p(u_i, v_i)
+			//		  | \   |			b = p(u_{i+1}, v_i)
+			//		  |  \  |			c = p(u_i, v_{i+1})
+			//		  |   \ |			d = p(u_{i+1}, v_{i+1})
+			//		  |	   \|
+			//	(i,j) o-----o(i+1, j)
+			//
+			// - az (i,j)-hez tartózó 1D-s index a VBO-ban: i+j*(N+1)
+			// - az (i,j)-hez tartózó 1D-s index az IB-ben: i*6+j*6*(N+1) 
+			//		(mert minden négyszöghöz 2db háromszög = 6 index tartozik)
+			//
+			indices[6 * i + j * 3 * 2 * (N)+0] = (i)+(j) * (N + 1);
+			indices[6 * i + j * 3 * 2 * (N)+1] = (i + 1) + (j) * (N + 1);
+			indices[6 * i + j * 3 * 2 * (N)+2] = (i)+(j + 1) * (N + 1);
+			indices[6 * i + j * 3 * 2 * (N)+3] = (i + 1) + (j) * (N + 1);
+			indices[6 * i + j * 3 * 2 * (N)+4] = (i + 1) + (j + 1) * (N + 1);
+			indices[6 * i + j * 3 * 2 * (N)+5] = (i)+(j + 1) * (N + 1);
+		}
+
+
+	// 1 db VAO foglalasa
+	glGenVertexArrays(1, &m_torus_vaoID);
+	// a frissen generált VAO beallitasa aktívnak
+	glBindVertexArray(m_torus_vaoID);
+
+	// hozzunk létre egy új VBO erõforrás nevet
+	glGenBuffers(1, &m_torus_vboID);
+	glBindBuffer(GL_ARRAY_BUFFER, m_torus_vboID); // tegyük "aktívvá" a létrehozott VBO-t
+	// töltsük fel adatokkal az aktív VBO-t
+	glBufferData(GL_ARRAY_BUFFER,	// az aktív VBO-ba töltsünk adatokat
+		sizeof(vert),		// ennyi bájt nagyságban
+		vert,	// errõl a rendszermemóriabeli címrõl olvasva
+		GL_STATIC_DRAW);	// úgy, hogy a VBO-nkba nem tervezünk ezután írni és minden kirajzoláskor felhasnzáljuk a benne lévõ adatokat
+
+
+// VAO-ban jegyezzük fel, hogy a VBO-ban az elsõ 3 float sizeof(Vertex)-enként lesz az elsõ attribútum (pozíció)
+	glEnableVertexAttribArray(0); // ez lesz majd a pozíció
+	glVertexAttribPointer(
+		0,				// a VB-ben található adatok közül a 0. "indexû" attribútumait állítjuk be
+		3,				// komponens szam
+		GL_FLOAT,		// adatok tipusa
+		GL_FALSE,		// normalizalt legyen-e
+		sizeof(Vertex),	// stride (0=egymas utan)
+		0				// a 0. indexû attribútum hol kezdõdik a sizeof(Vertex)-nyi területen belül
+	);
+
+	// a második attribútumhoz pedig a VBO-ban sizeof(Vertex) ugrás után sizeof(glm::vec3)-nyit menve újabb 3 float adatot találunk (normális)
+	glEnableVertexAttribArray(1); // ez lesz majd a normális
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(glm::vec3)));
+
+	// textúrakoordináták bekapcsolása a 2-es azonosítójú attribútom csatornán
+	glEnableVertexAttribArray(2); // ez lesz majd a textúra
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2 * sizeof(glm::vec3)));
+
+	// index puffer létrehozása
+	glGenBuffers(1, &m_torus_ibID);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_torus_ibID);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	glBindVertexArray(0); // feltöltüttük a VAO-t, kapcsoljuk le
@@ -271,6 +481,8 @@ bool CMyApp::Init()
 	glCullFace(GL_BACK); // GL_BACK: a kamerától "elfelé" nézõ lapok, GL_FRONT: a kamera felé nézõ lapok
 
 	InitPlane();
+	InitCube();
+	InitTorus();
 	InitSphere();
 	InitShaders();
 	InitTextures();
@@ -365,6 +577,27 @@ void CMyApp::Render()
 
 
 	//
+	// - Torus kirajzolása
+	//
+	world = glm::translate(glm::vec3(0, 6, 0));
+	wolrdIT = glm::inverse(glm::transpose(world));
+	mvp = viewProj * world;
+	glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, &mvp[0][0]);
+	glUniformMatrix4fv(m_loc_world, 1, GL_FALSE, &world[0][0]);
+	glUniformMatrix4fv(m_loc_worldIT, 1, GL_FALSE, &wolrdIT[0][0]);
+
+	// kapcsoljuk be a VAO-t (a VBO jön vele együtt)
+	glBindVertexArray(m_torus_vaoID);
+
+	// kirajzolás
+	//A draw hívásokhoz a VAO és a program bindolva kell legyenek (glUseProgram() és glBindVertexArray())
+	glDrawElements(GL_TRIANGLES,	// primitív típus
+		3 * 2 * (N) * (M),			// hany csucspontot hasznalunk a kirajzolashoz
+		GL_UNSIGNED_SHORT,			// indexek tipusa
+		0);							// indexek eltolása
+
+
+	//
 	// - Sik kirajzolása
 	//
 	world = glm::translate(glm::vec3(0, -2, 0)) * glm::scale(glm::vec3(50, 1, 50));
@@ -376,6 +609,19 @@ void CMyApp::Render()
 
 	glBindVertexArray(m_plane_vaoID);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+
+
+	// Kocka kirazolas
+
+	world = glm::translate(glm::vec3(-3, 1, -3)) * glm::scale(glm::vec3(2, 1, 2));
+	wolrdIT = glm::inverse(glm::transpose(world));
+	mvp = viewProj * world;
+	glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, &mvp[0][0]);
+	glUniformMatrix4fv(m_loc_world, 1, GL_FALSE, &world[0][0]);
+	glUniformMatrix4fv(m_loc_worldIT, 1, GL_FALSE, &wolrdIT[0][0]);
+
+	glBindVertexArray(m_cube_vaoID);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, 0);
 
 	// VAO kikapcsolasa
 	glBindVertexArray(0);

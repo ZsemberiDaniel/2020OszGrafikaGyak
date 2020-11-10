@@ -46,7 +46,9 @@ protected:
 
 	// segédfüggvények
 	glm::vec3 GetPos(float u, float v);
+	glm::vec3 GetPos2(float u, float v);
 	glm::vec3 GetNorm(float u, float v);
+	glm::vec3 GetNorm2(float u, float v);
 	glm::vec2 GetTex(float u, float v);
 
 	// shaderekhez szükséges változók
@@ -61,6 +63,14 @@ protected:
 	GLuint m_plane_vaoID;
 	GLuint m_plane_vboID;
 	GLuint m_plane_ibID;
+
+	GLuint m_torus_vaoID;
+	GLuint m_torus_vboID;
+	GLuint m_torus_ibID;
+
+	GLuint m_cube_vaoID;
+	GLuint m_cube_vboID;
+	GLuint m_cube_ibID;
 
 	gCamera	m_camera;
 
@@ -77,7 +87,9 @@ protected:
 	static const int M = 40;
 
 	//A jobb olvashatóság kedvéért
+	void InitCube();
 	void InitSphere();
+	void InitTorus();
 	void InitShaders();
 	void InitTextures();
 	void InitPlane();

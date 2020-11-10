@@ -7,7 +7,6 @@ class gCamera
 {
 public:
 	gCamera(void);
-	gCamera(glm::vec3 _eye, glm::vec3 _at, glm::vec3 _up);
 	~gCamera(void);
 
 	/// <summary>
@@ -18,9 +17,7 @@ public:
 
 	void Update(float _deltaTime);
 
-	void SetView(glm::vec3 _eye, glm::vec3 _at, glm::vec3 _up);
-	void SetProj(float _angle, float _aspect, float _zn, float _zf); 
-	void LookAt(glm::vec3 _at);
+	void SetProj(float _angle, float _aspect, float _zn, float _zf);
 
 	void SetSpeed(float _val);
 	glm::vec3 GetEye()
@@ -55,6 +52,8 @@ public:
 	void MouseMove(SDL_MouseMotionEvent& mouse);
 
 private:
+	float radius = 8.0f;
+
 	/// <summary>
 	/// Updates the UV.
 	/// </summary>
@@ -101,11 +100,6 @@ private:
 	/// current viewing direction from the view position m_eye. 
 	/// </summary>
 	float	m_v;
-
-	/// <summary>
-	/// The distance of the look at point from the camera. 
-	/// </summary>
-	float	m_dist;
 
 	/// <summary>
 	/// The unit vector pointing towards the viewing direction.
