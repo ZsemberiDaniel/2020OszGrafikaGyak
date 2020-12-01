@@ -182,7 +182,27 @@ void CMyApp::Render()
 
 	// kontrollpontokat összekötő szakaszok
 	m_pointProgram.SetUniform("color", glm::vec4(0.5, 0.5, 0.5, 1));
-	glDrawArrays(GL_LINE_STRIP, 0, (GLsizei)m_controlPoints.size());
+
+	int curveCount = (m_controlPoints.size() - 1) / 3;
+	for (int i = 0; i < curveCount; i++)
+	{
+		glm::vec3 p0 = m_controlPoints[3 * i];
+		glm::vec3 p1 = m_controlPoints[3 * i + 1];
+		glm::vec3 p2 = m_controlPoints[3 * i + 2];
+		glm::vec3 p3 = m_controlPoints[3 * i + 3];
+
+		int N = 50;
+		std::vector<glm::vec3> curvePoints(N);
+
+		for (int k = 0; k < N; k++)
+		{
+			float t = (float)k / (N - 1);
+			glm::vec3 curvePoint = EvalBezier(t, p0, p1, p2, p3);
+			curvePoints[k] = curvePoint;
+		}
+		m_pointProgram.SetUniform("points", curvePoints);
+		glDrawArrays(GL_LINE_STRIP, 0, (GLsizei)curvePoints.size() - 1);
+	}
 
 	// mindegyik geometria ugyanazt a shader programot hasznalja: ne kapcsolgassuk most ki-be
 	m_program.Use();
@@ -200,19 +220,29 @@ void CMyApp::Render()
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	m_vao.Unbind(); // nem feltétlen szükséges: a m_mesh->draw beállítja a saját VAO-ját
 
-	glm::vec3 suzPos = Eval(m_currentParam);
-	glm::vec3 forward = glm::normalize(Eval(m_currentParam + 0.01f) - suzPos);
-	float phi = atan2f(forward.x, forward.z);
-	float theta = acosf(forward.y) - M_PI / 2;
+	if (m_controlPoints.size() >= 4) {
+		int curve = (int)m_currentParam;
 
-	// Suzanne 1
-	glm::mat4 suzanne1World = glm::translate(suzPos) * glm::rotate(phi, glm::vec3(0, 1, 0)) * glm::rotate(theta, glm::vec3(1, 0, 0));
-	m_program.SetUniform("world", suzanne1World);
-	m_program.SetUniform("worldIT", glm::transpose(glm::inverse(suzanne1World)));
-	m_program.SetUniform("MVP", m_camera.GetViewProj()*suzanne1World);
-	m_program.SetUniform("Kd", glm::vec4(1, 0.3, 0.3, 1));
+		glm::vec3 p0 = m_controlPoints[3 * curve];
+		glm::vec3 p1 = m_controlPoints[3 * curve + 1];
+		glm::vec3 p2 = m_controlPoints[3 * curve + 2];
+		glm::vec3 p3 = m_controlPoints[3 * curve + 3];
+
+		float localParameter = m_currentParam - curve;
+		glm::vec3 suzPos = EvalBezier(localParameter, p0, p1, p2, p3);
+		glm::vec3 forward = glm::normalize(EvalBezier(localParameter + 0.01f, p0, p1, p2, p3) - suzPos);
+		float phi = atan2f(forward.x, forward.z);
+		float theta = acosf(forward.y) - M_PI / 2;
+
+		// Suzanne 1
+		glm::mat4 suzanne1World = glm::translate(suzPos) * glm::rotate(phi, glm::vec3(0, 1, 0)) * glm::rotate(theta, glm::vec3(1, 0, 0));
+		m_program.SetUniform("world", suzanne1World);
+		m_program.SetUniform("worldIT", glm::transpose(glm::inverse(suzanne1World)));
+		m_program.SetUniform("MVP", m_camera.GetViewProj()*suzanne1World);
+		m_program.SetUniform("Kd", glm::vec4(1, 0.3, 0.3, 1));
 	
-	m_mesh->draw();
+		m_mesh->draw();
+	}
 
 	// végetért a 3D színtér rajzolása
 	m_program.Unuse();
@@ -235,7 +265,7 @@ void CMyApp::Render()
 		ImGui::ListBoxHeader("List", 4);
 		for (size_t i = 0; i < m_pointName.size(); ++i)
 		{
-			if (ImGui::Selectable(m_pointName[i].c_str(), (i==currentItem))  )
+			if (ImGui::Selectable(m_pointName[i].c_str(), (i==currentItem)))
 				currentItem = i;
 		}
 		ImGui::ListBoxFooter();
@@ -270,7 +300,7 @@ void CMyApp::Render()
 		if (m_controlPoints.size() > 0)
 			ImGui::SliderFloat3("Coordinates", &(m_controlPoints[currentItem][0]), -30, 30);
 
-		ImGui::SliderFloat("Parameter", &m_currentParam, 0, (float)(m_controlPoints.size()-1));
+		ImGui::SliderFloat("Parameter", &m_currentParam, 0, (m_controlPoints.size() - 1) / 3);
 
 		// 1. feladat: Suzanne feje mindig forduljon a menetirány felé! Először ezt elég síkban (=XZ) megoldani!
 		// 2. feladat: valósíts meg egy Animate gombot! Amíg nyomva van az m_currentParameter periodikusan változzon a [0,m_controlPoints.size()-1] intervallumon belül!
@@ -321,10 +351,10 @@ glm::vec3 CMyApp::EvalBezier(float t, glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, 
 		return glm::vec3(0);
 
 	if (t <= 0)
-		return m_controlPoints[0];
+		return p0;
 
 	if (t >= 1)
-		return m_controlPoints[m_controlPoints.size() - 1];
+		return p3;
 
 	float oneMinusT = 1.0f - t;
 	return oneMinusT * oneMinusT * oneMinusT * p0 +
